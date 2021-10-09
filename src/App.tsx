@@ -2,8 +2,12 @@ import React from 'react';
 import './App.css';
 import allComponents from './components';
 
+interface componentParts {
+  name: string,
+  props: Object
+}
 interface appState {
-  pageComponents: Array<React.ReactElement>
+  pageComponents: Array<componentParts>
 }
 
 class App extends React.Component {
@@ -22,6 +26,22 @@ class App extends React.Component {
   handleSelectChange(evt: React.ChangeEvent<HTMLSelectElement>) {
     this.currSelectedComponent = evt.target.value;
   }
+  postPageComponents() {
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        allComponents: this.state.pageComponents
+      })
+    };
+    console.log(requestOptions.body);
+
+    fetch('http://localhost:3000/make-page', requestOptions)
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        console.log(data);
+      });
+  }
   addSelectedComponent(evt: React.MouseEvent<HTMLInputElement>) {
     const name: string = this.currSelectedComponent;
     const funcToExecute: Function | undefined = allComponents[name];
@@ -29,7 +49,10 @@ class App extends React.Component {
     if(!funcExists) {
       return;
     }
-    this.state.pageComponents.push(React.createElement(allComponents[name], {}, {}));
+    this.state.pageComponents.push({
+      name,
+      props: {}
+    });
     this.setState({
       pageComponents: this.state.pageComponents
     });
@@ -38,7 +61,7 @@ class App extends React.Component {
     // FIXME why do I need a div around any module I create?
     return (
       <div>
-        { this.state.pageComponents.map(el => (<div className="module_wrapper">{el}</div>) )}
+        { this.state.pageComponents.map(component => (<div className="module_wrapper">{React.createElement(allComponents[component.name], component.props, {})}</div>) )}
         <div>
           <select onChange={this.handleSelectChange.bind(this)}>
             <option>None</option>
@@ -46,6 +69,7 @@ class App extends React.Component {
           </select>
           <br />
           <input type="button" value="Add a Component" onClick={this.addSelectedComponent.bind(this)} />
+          <input type="button" value="Make a Page" onClick={this.postPageComponents.bind(this)} />
         </div>
       </div>
     );

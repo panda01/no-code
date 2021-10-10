@@ -16,7 +16,7 @@ server.post('/make-page', function(request, response) {
 	console.log('Component Import List', componentImportList);
 
 	// create a files and start writing to it
-	const outputFile = fs.createWriteStream('output.jsx');
+	const outputFile = fs.createWriteStream('output/App.jsx');
 	// TODO eventually to be able to still add and manipulate things can
 	// use markers like "//--computer_generated--" to find the code to edit
 	outputFile.write('//--computer_generated-- import code\n');
@@ -24,12 +24,26 @@ server.post('/make-page', function(request, response) {
 	// write the import list
 	for(let idx = 0; idx < componentImportList.length; idx++) {
 		const file = componentImportList[idx];
-		outputFile.write(`import ${file} from './components/${file}';\n`);
+		outputFile.write(`import ${file} from '../src/components/${file}';\n`);
 	}
+	outputFile.write('\n\n');
+	outputFile.write(`function App() {
+	return (
+		<div>`);
+	for(let idx = 0; idx < request.body.allComponents.length; idx++) {
+		const componentObj = request.body.allComponents[idx];
+		outputFile.write(`
+			<${componentObj.name} />`);
+	}
+	outputFile.write(`
+		</div>
+	);
+}\n`);
 
-
+	outputFile.write('export default App;');
 
 	outputFile.end();
+
 
 	response.json({hello: 'world'});
 });

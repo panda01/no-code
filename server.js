@@ -2,6 +2,18 @@ const express = require('express');
 const fs = require('fs');
 
 const server = express();
+
+const OUTPUT_DEST_DIR = 'output/src/';
+
+function makeRespFn(msg) {
+	return function(err) {
+		if(err) {
+			throw err;
+		}
+		console.log(msg);
+	};
+}
+
 // to receive actual 
 server.use(express.json());
 server.post('/make-page', function(request, response) {
@@ -16,15 +28,30 @@ server.post('/make-page', function(request, response) {
 	console.log('Component Import List', componentImportList);
 
 	// create a files and start writing to it
-	const outputFile = fs.createWriteStream('output/App.jsx');
+	const outputFile = fs.createWriteStream(OUTPUT_DEST_DIR + 'App.tsx');
 	// TODO eventually to be able to still add and manipulate things can
 	// use markers like "//--computer_generated--" to find the code to edit
 	outputFile.write('//--computer_generated-- import code\n');
+
+	const COMPONENTS_DIR = OUTPUT_DEST_DIR + 'components/';
+
+	const componentsFolderExists = fs.existsSync(COMPONENTS_DIR);
+	if(componentsFolderExists) {
+		console.log('Trying to remove component');
+		fs.rmSync(COMPONENTS_DIR, { recursive: true }, makeRespFn('Components Dir Del'));
+	}
+	fs.mkdirSync(COMPONENTS_DIR, makeRespFn('Components Dir Made'));
 	
 	// write the import list
 	for(let idx = 0; idx < componentImportList.length; idx++) {
 		const file = componentImportList[idx];
-		outputFile.write(`import ${file} from '../src/components/${file}';\n`);
+		// copy the component file over to the new build
+		fs.copyFile(
+			`src/components/${file}.tsx`,
+			`${COMPONENTS_DIR}${file}.tsx`,
+			makeRespFn(`Component copied: ${file}.tsx`)
+		);
+		outputFile.write(`import ${file} from './components/${file}';\n`);
 	}
 	outputFile.write('\n\n');
 	outputFile.write(`function App() {
@@ -37,8 +64,7 @@ server.post('/make-page', function(request, response) {
 	}
 	outputFile.write(`
 		</div>
-	);
-}\n`);
+	);\n}\n`);
 
 	outputFile.write('export default App;');
 

@@ -1,8 +1,17 @@
 import React from 'react';
+import type { ComponentProps } from './Types';
 
 interface thirdComponentProps {
   title: string
-}
+};
+
+const ThirdComponentProps: ComponentProps = {
+  order: ["title", "count"],
+  fields: {
+    title: "string",
+    count: "number"
+  }
+};
 
 function ThirdComponent(props: thirdComponentProps): React.ReactElement {
   return (
@@ -11,4 +20,4 @@ function ThirdComponent(props: thirdComponentProps): React.ReactElement {
 }
 
 
-export default ThirdComponent;
+export {ThirdComponent as default, ThirdComponentProps };
